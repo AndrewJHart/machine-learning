@@ -1,0 +1,7 @@
+# Ignore out logs output.
+logs_dir
+
+# Ignore our training and results files. These should be gotten from Kaggle's site.
+train.csv
+test.csv
+results.csv

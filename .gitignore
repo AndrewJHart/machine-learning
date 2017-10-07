@@ -1,0 +1,3 @@
+# Ignore our sublime project files for any that are setup.
+*.sublime-project
+*.sublime-workspace
