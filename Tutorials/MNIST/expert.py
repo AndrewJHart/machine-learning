@@ -6,21 +6,21 @@ mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 # Setup our weights and biases and try to prevent them from
 # ever getting to 0 (dying) as best we can.
 def weight_variable(shape):
-	initial = tf.truncated_normal(shape, stddev=0.1)
-	return tf.Variable(initial)
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    return tf.Variable(initial)
 
 def bias_variable(shape):
-	initial = tf.constant(0.1, shape=shape)
-	return tf.Variable(initial)
+    initial = tf.constant(0.1, shape=shape)
+    return tf.Variable(initial)
 
 # Setup our convolution (with strides of 1).
 def conv2d(x, W):
-	return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
 
 # Setup our pooling options (2x2 matrix for pooling)
 def max_pool_2x2(x):
-	return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-							strides=[1, 2, 2, 1], padding='SAME')
+    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
+                            strides=[1, 2, 2, 1], padding='SAME')
 
 # Create our placeholders for our data again.
 x = tf.placeholder(tf.float32, [None, 784])
@@ -80,8 +80,8 @@ tf.global_variables_initializer().run()
 # Start by training the model 20,000 rounds grabbing 50 training
 # examples during each round.
 for _ in range(20000):
-	batch_xs, batch_ys = mnist.train.next_batch(50)
-	sess.run(train_step, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 0.5})
+    batch_xs, batch_ys = mnist.train.next_batch(50)
+    sess.run(train_step, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 0.5})
 
 # Finally, calculate our accuracy and print it out.
 correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))

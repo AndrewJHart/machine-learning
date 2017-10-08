@@ -31,8 +31,8 @@ tf.global_variables_initializer().run()
 # Start by training the model 1000 rounds grabbing 100 training
 # examples during each round.
 for _ in range(1000):
-	batch_xs, batch_ys = mnist.train.next_batch(100)
-	sess.run(train_step, feed_dict={x: batch_xs, y: batch_ys})
+    batch_xs, batch_ys = mnist.train.next_batch(100)
+    sess.run(train_step, feed_dict={x: batch_xs, y: batch_ys})
 
 # Finally, calculate our accuracy and print it out.
 # We do this by using tf.argmax to compare values, which
