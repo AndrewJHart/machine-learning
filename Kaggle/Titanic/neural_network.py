@@ -5,7 +5,7 @@ import tensorflow as tf
 # Define some constants that we'll want to have for our project.
 LOG_DIR = "logs_dir"
 TRAINING_FILE_NAME = 'train.csv'
-TESTING_FILE_NAME = 'train.csv'
+TESTING_FILE_NAME = 'test.csv'
 OUTPUT_FILE_NAME = 'results.csv'
 BATCH_SIZE = 50
 FEATURES = 4
@@ -81,7 +81,7 @@ def run_nn(sess, merged_summary, writer):
 
 def evaluate_nn(sess):
     # Finally, test our accuracy and print out stats about how well this model did.
-    indexes, test_xs, test_ys = get_batch(testing_data, 0, testing_data_size)
+    indexes, test_xs, test_ys = get_batch(training_data, 0, training_data_size)
     print()
     print()
     print("======================")
@@ -92,14 +92,15 @@ def evaluate_nn(sess):
     print("======================")
 
 def save_nn_results(sess):
+    indexes, test_xs, test_ys = get_batch(testing_data, 0, testing_data_size)
     # And finally write the results to an output file.
     with open("results.csv", "w") as out_file:
-        out_file.write("PassengerId,Survived,Name\n")
-        output = sess.run(output, feed_dict={x: test_xs, y_: test_ys})
-        for index, prediction in zip(indexes, output):
-            out_file.write("{0},{1},{2}\n".format(index[0], prediction, index[1]))
+        out_file.write("PassengerId,Survived\n")
+        results = sess.run(output, feed_dict={x: test_xs, y_: test_ys})
+        for index, prediction in zip(indexes, results):
+            out_file.write("{0},{1}\n".format(index[0], prediction))
 
 sess, merged_summary, writer = setup_nn()
 run_nn(sess, merged_summary, writer)
 evaluate_nn(sess)
-save_nn_reuslts(sess)
+save_nn_results(sess)

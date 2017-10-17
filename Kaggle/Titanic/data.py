@@ -19,21 +19,24 @@ def get_batch(input_data, start, end):
         # Ultimately we'd like to have our algorithm look at
         # each feature, but we do want to make sure that non of the features
         # would hurt us instead.
-        passenger_id = data['PassengerId']      # Used for output
-        survived = float(data['Survived'])      # Used for output
-        p_class = float(data['Pclass'])         # Used
-        name = data['Name']                     # Unused
-        sex = 1 if data['Sex'] == 'male' else 0 # Used
-        age = data['Age'] or 0                  # Used
-        sibsp = data['SibSp']                   # Unused
-        parch = data['Parch']                   # Unused
-        ticket = data['Ticket']                 # Unused
-        fare = data['Fare'] or 0                # Used
-        cabin = data['Cabin']                   # Unused
-        embarked = data['Embarked']             # Unused
+        passenger_id = data['PassengerId']          # Used for output
+        if 'Survived' in data:
+            survived = float(data['Survived'] or 0) # Used for output
+        else:
+            survived = 0                            # Used if test data.
+        p_class = float(data['Pclass'])             # Used
+        name = data['Name']                         # Unused
+        sex = 1 if data['Sex'] == 'male' else 0     # Used
+        age = data['Age'] or 0                      # Used
+        sibsp = data['SibSp']                       # Unused
+        parch = data['Parch']                       # Unused
+        ticket = data['Ticket']                     # Unused
+        fare = data['Fare'] or 0                    # Used
+        cabin = data['Cabin']                       # Unused
+        embarked = data['Embarked']                 # Unused
 
-        # Create a list of outputs that contains the passenger's ID and name.
-        output.append([passenger_id, name])
+        # Create a list of outputs that contains the passenger's ID.
+        output.append([passenger_id])
         # Then create our batch outputs.
         batch_xs.append([age, p_class, sex, fare])
         # Note that we have 2 outputs we expect: One for dead and one for alive.
@@ -41,4 +44,3 @@ def get_batch(input_data, start, end):
         # it ultimately needs to sum to one. See README for more details.
         batch_ys.append([1 - survived, survived])
     return output, batch_xs, batch_ys
-
