@@ -28,8 +28,8 @@ def get_batch(input_data, start, end):
         name = data['Name']                         # Unused
         sex = 1 if data['Sex'] == 'male' else 0     # Used
         age = data['Age'] or 0                      # Used
-        sibsp = data['SibSp']                       # Unused
-        parch = data['Parch']                       # Unused
+        sibsp = data['SibSp']                       # Used
+        parch = data['Parch']                       # Used
         ticket = data['Ticket']                     # Unused
         fare = data['Fare'] or 0                    # Used
         cabin = data['Cabin']                       # Unused
@@ -38,7 +38,7 @@ def get_batch(input_data, start, end):
         # Create a list of outputs that contains the passenger's ID.
         output.append([passenger_id])
         # Then create our batch outputs.
-        batch_xs.append([age, p_class, sex, fare])
+        batch_xs.append([age, p_class, sex, fare, sibsp, parch])
         # Note that we have 2 outputs we expect: One for dead and one for alive.
         # This is done to make sure our softmax activation works as expected because
         # it ultimately needs to sum to one. See README for more details.

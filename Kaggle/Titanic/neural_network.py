@@ -8,7 +8,7 @@ TRAINING_FILE_NAME = 'train.csv'
 TESTING_FILE_NAME = 'test.csv'
 OUTPUT_FILE_NAME = 'results.csv'
 BATCH_SIZE = 50
-FEATURES = 4
+FEATURES = 6
 OUTPUTS = 2
 
 # Start by reading in our CSV files.
