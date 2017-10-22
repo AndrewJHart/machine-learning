@@ -8,7 +8,7 @@ TRAINING_FILE_NAME = 'train.csv'
 TESTING_FILE_NAME = 'test.csv'
 OUTPUT_FILE_NAME = 'results.csv'
 BATCH_SIZE = 50
-FEATURES = 6
+FEATURES = 9
 OUTPUTS = 2
 
 # Start by reading in our CSV files.
@@ -21,7 +21,7 @@ def weight_variable(shape):
     return tf.Variable(initial, name="W")
 
 def bias_variable(shape):
-    initial = tf.zeros(shape)
+    initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial, name="b")
 
 #############################################################
@@ -36,21 +36,21 @@ with tf.name_scope("prediction"):
     W = weight_variable([FEATURES, OUTPUTS])
     b = bias_variable([OUTPUTS])
     y_mid = tf.matmul(x, W) + b
-    y = tf.nn.softmax(y_mid)
-    output = tf.argmax(y, 1)
+    prediction = tf.nn.softmax(y_mid)
+    output = tf.argmax(prediction, 1)
     # Give some summaries for the outputs.
     tf.summary.histogram("weights", W)
     tf.summary.histogram("biases", b)
-    tf.summary.histogram("activation", y)
+    tf.summary.histogram("prediction", prediction)
 
 # Now calculate the error and train it.
 with tf.name_scope("cost"):
-    cost = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y + 1e-10), reduction_indices=1))
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=prediction))
     tf.summary.scalar("cost", cost)
 with tf.name_scope("train"):
-    train_step = tf.train.GradientDescentOptimizer(0.001).minimize(cost)
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
 # Calculate the accuracy finally.
-correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.summary.scalar("accuracy", accuracy)
 
@@ -70,14 +70,15 @@ def setup_nn():
     return sess, merged_summary, writer
 
 def run_nn(sess, merged_summary, writer):
+    iterations = 50000
     # Train everything.
-    for j in range(10000):
+    for j in range(iterations):
         for i in range(0, int(training_data_size / BATCH_SIZE)):
             indexes, training_xs, training_ys = get_batch(training_data, i * BATCH_SIZE, i * BATCH_SIZE + BATCH_SIZE)
             # print(sess.run(y, feed_dict={x: training_xs, y_: training_ys}))
             s, t = sess.run([merged_summary, train_step], feed_dict={x: training_xs, y_: training_ys})
             if j % 500 == 0:
-                writer.add_summary(s, j + i * (10000 / 500))
+                writer.add_summary(s, j + i * (iterations / 500))
 
 def evaluate_nn(sess):
     # Finally, test our accuracy and print out stats about how well this model did.
