@@ -2,7 +2,7 @@
 import csv
 
 # Define some constants that we'll want to have for our project.
-FEATURES = 9
+FEATURES = 6
 OUTPUTS = 2
 
 def read_file(file_name):
@@ -34,9 +34,11 @@ def get_batch(input_data, start, end):
         # Create a list of outputs that contains the passenger's ID.
         output.append([data_point['passenger_id']])
         # Then create our batch outputs.
-        batch_xs.append([data_point['age'], data_point['p_class'], data_point['sex'], 
-                         data_point['fare'], data_point['sibsp'], data_point['parch'], data_point['fare_per_person'], 
-                         data_point['embarked'], data_point['title']])
+        # batch_xs.append([data_point['age'], data_point['p_class'], data_point['sex'], 
+        #                  data_point['fare'], data_point['sibsp'], data_point['parch'], data_point['fare_per_person'], 
+        #                  data_point['embarked'], data_point['title']])
+        batch_xs.append([data_point['age'], data_point['p_class'], data_point['sex'],
+            data_point['title'], data_point['sibsp'], data_point['parch']])
         # Note that we have 2 outputs we expect: One for dead and one for alive.
         # This is done to make sure our activation function works as expected because
         # it ultimately needs to sum to one. See README for more details.
