@@ -1,6 +1,10 @@
 # We'll need to import csv to read our CSV files.
 import csv
 
+# Define some constants that we'll want to have for our project.
+FEATURES = 9
+OUTPUTS = 2
+
 def read_file(file_name):
     # Start by reading in our CSV files.
     with open(file_name) as file:
@@ -15,10 +19,10 @@ title_options = ['Mrs', 'Mr', 'Master', 'Miss', 'Major', 'Rev',
                  'Dr', 'Ms', 'Mlle','Col', 'Capt', 'Mme', 'Countess',
                  'Don', 'Jonkheer']
 
-def substrings_in_string(big_string, substrings):
-    for substring in substrings:
-        if big_string.find(substring) != -1:
-            return substrings.index(substring)
+def title_ind(name):
+    for title in title_options:
+        if name.find(title) != -1:
+            return title_options.index(title)
     return 'nan'
 
 def get_batch(input_data, start, end):
@@ -47,27 +51,25 @@ def get_cleaned(input_data, start, end):
         # Ultimately we'd like to have our algorithm look at
         # each feature, but we do want to make sure that non of the features
         # would hurt us instead.
-        passenger_id = data['PassengerId']          # Used for output
+        passenger_id = data['PassengerId']              # Used for output
         if 'Survived' in data:
-            survived = float(data['Survived'] or 0) # Used for output
+            survived = float(data['Survived'] or 0)     # Used for output
         else:
             survived = 0                                # Used if test data.
         p_class = float(data['Pclass'])                 # Used
         name = data['Name']                             # Used in title
-        title = substrings_in_string(name, title_options)
-        sex = gender_option[data['Sex']]                # Used 
-        age = float(data['Age'] or 0)                   # Used
+        title = title_ind(name)                         # Used
+        sex = gender_option[data['Sex']]                # Used                      * Could be missing in dataset
+        age = float(data['Age'] or 0)                   # Used                      * Could be missing in dataset
         sibsp = float(data['SibSp'])                    # Used
         parch = float(data['Parch'])                    # Used
         ticket = data['Ticket']                         # Unused
-        fare = float(data['Fare'] or 0)                 # Used
+        fare = float(data['Fare'] or 0)                 # Used                      * Could be missing in dataset
         cabin = data['Cabin']                           # Unused
-        embarked = embarked_options[data['Embarked']]   # Used
-        family_size = sibsp + parch                     # Used in fare_per_person
+        embarked = embarked_options[data['Embarked']]   # Used                      * Could be missing in dataset
+        family_size = sibsp + parch + 1                 # Used
         age_class = age * p_class                       # Unused
-        fare_per_person = fare 
-        if family_size > 0:
-            fare_per_person = fare / family_size        # Used
+        fare_per_person = fare / family_size            # Used
 
         # Create our outputs.
         output.append({'age' : age, 'p_class' : p_class, 'sex' : sex, 'fare' : fare, 

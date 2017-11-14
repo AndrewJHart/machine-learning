@@ -1,19 +1,35 @@
 from data import read_file
 from data import get_batch
+from data import FEATURES
+from data import OUTPUTS
 import tensorflow as tf
 
-# Define some constants that we'll want to have for our project.
-LOG_DIR = "logs_dir"
-TRAINING_FILE_NAME = 'train.csv'
-TESTING_FILE_NAME = 'test.csv'
-OUTPUT_FILE_NAME = 'results.csv'
-BATCH_SIZE = 50
-FEATURES = 9
-OUTPUTS = 2
+class DataPoint:
+    indexes = []
+    xs = []
+    ys = []
 
-# Start by reading in our CSV files.
-training_data, training_data_size = read_file(TRAINING_FILE_NAME)
-testing_data, testing_data_size = read_file(TESTING_FILE_NAME)
+# Our expected inputs for training, testing, etc.
+class NNData:
+    training = DataPoint()
+    cross_validation = DataPoint()
+    testing = DataPoint()
+    output = DataPoint()
+
+    def __init__(self, training_file, usage_file, split_training=True):
+        # Start by reading in our CSV files.
+        training_data, training_data_size = read_file(training_file)
+        usage_data, usage_data_size = read_file(usage_file)
+
+        if split_training:
+            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * 0.6))
+            self.cross_validation.indexes, self.cross_validation.xs, self.cross_validation.ys = get_batch(training_data, int(training_data_size * 0.6), int(training_data_size * 0.8))
+            self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * 0.8), training_data_size)
+            self.output.indexes, self.output.xs, self.output.ys = get_batch(usage_data, 0, usage_data_size)
+        else:
+            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, training_data_size)
+            self.output.indexes, self.output.xs, self.output.ys = get_batch(usage_data, 0, usage_data_size)
+
 
 # Setup some helper methods.
 def weight_variable(shape):
@@ -48,7 +64,7 @@ with tf.name_scope("cost"):
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=prediction))
     tf.summary.scalar("cost", cost)
 with tf.name_scope("train"):
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
+    train_step = tf.train.GradientDescentOptimizer(1e-4).minimize(cost)
 # Calculate the accuracy finally.
 correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -60,48 +76,38 @@ tf.summary.scalar("accuracy", accuracy)
 #############################################################
 #############################################################
 
-def setup_nn():
+def setup(log_dir):
     # Setup our session.
     sess = tf.InteractiveSession()
     tf.global_variables_initializer().run()
     merged_summary = tf.summary.merge_all()
-    writer = tf.summary.FileWriter(LOG_DIR)
+    writer = tf.summary.FileWriter(log_dir)
     writer.add_graph(sess.graph)
     return sess, merged_summary, writer
 
-def run_nn(sess, merged_summary, writer):
-    iterations = 50000
-    # Train everything.
-    for j in range(iterations):
-        for i in range(0, int(training_data_size / BATCH_SIZE)):
-            indexes, training_xs, training_ys = get_batch(training_data, i * BATCH_SIZE, i * BATCH_SIZE + BATCH_SIZE)
-            # print(sess.run(y, feed_dict={x: training_xs, y_: training_ys}))
-            s, t = sess.run([merged_summary, train_step], feed_dict={x: training_xs, y_: training_ys})
-            if j % 500 == 0:
-                writer.add_summary(s, j + i * (iterations / 500))
+training_iteration = 0
 
-def evaluate_nn(sess):
-    # Finally, test our accuracy and print out stats about how well this model did.
-    indexes, test_xs, test_ys = get_batch(training_data, 0, training_data_size)
-    print()
-    print()
-    print("======================")
-    print("======================")
-    print("Data size: {} Batch size: {}".format(training_data_size, BATCH_SIZE))
-    print("Accuracy: {}".format(sess.run(accuracy, feed_dict={x: test_xs, y_: test_ys}) * 100))
-    print("======================")
-    print("======================")
+def train(sess, data):
+    global training_iteration
+    sess.run(train_step, feed_dict={x: data.training.xs, y_: data.training.ys})
+    training_iteration += 1
 
-def save_nn_results(sess):
-    indexes, test_xs, test_ys = get_batch(testing_data, 0, testing_data_size)
+def train_summary(sess, data, merged_summary, writer):
+    global training_iteration
+    s, t = sess.run([merged_summary, train_step], feed_dict={x: data.training.xs, y_: data.training.ys})
+    writer.add_summary(s, training_iteration)
+    training_iteration += 1
+
+# Accuracy methods.
+def get_cv_accuracy(sess, data):
+    return sess.run(accuracy, feed_dict={x: data.cross_validation.xs, y_: data.cross_validation.ys}) * 100
+def get_test_accuracy(sess, data):
+    return sess.run(accuracy, feed_dict={x: data.testing.xs, y_: data.testing.ys}) * 100
+
+def save_outputs(sess, data, output_file_name):
     # And finally write the results to an output file.
-    with open("results.csv", "w") as out_file:
+    with open(output_file_name, "w") as out_file:
         out_file.write("PassengerId,Survived\n")
-        results = sess.run(output, feed_dict={x: test_xs, y_: test_ys})
-        for index, prediction in zip(indexes, results):
+        results = sess.run(output, feed_dict={x: data.output.xs, y_: data.output.ys})
+        for index, prediction in zip(data.output.indexes, results):
             out_file.write("{0},{1}\n".format(index[0], prediction))
-
-sess, merged_summary, writer = setup_nn()
-run_nn(sess, merged_summary, writer)
-evaluate_nn(sess)
-save_nn_results(sess)
