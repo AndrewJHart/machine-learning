@@ -11,7 +11,8 @@ data = nn.NNData(TRAINING_FILE_NAME, TESTING_FILE_NAME, split_training=False)
 
 # Setup our neural network and train it.
 sess, merged_summary, writer = nn.setup(LOG_DIR)
-nn.train(sess, data)
+for i in range(1000):
+    nn.train(sess, data, batch=10)
 
 # Finally, save the results of our actual use case.
 nn.save_outputs(sess, data, OUTPUT_FILE_NAME)

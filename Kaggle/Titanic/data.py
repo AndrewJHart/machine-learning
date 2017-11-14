@@ -2,7 +2,7 @@
 import csv
 
 # Define some constants that we'll want to have for our project.
-FEATURES = 6
+FEATURES = 11
 OUTPUTS = 2
 
 def read_file(file_name):
@@ -13,8 +13,9 @@ def read_file(file_name):
         size = len(data)
         return data, size
 
-gender_option = {'' : 0, 'male' : 1, 'female' : 0}
+gender_option = {'' : 0, 'male' : 1, 'female' : 2}
 embarked_options = {'' : 0, 'C' : 1, 'Q' : 2, 'S' : 3}
+deck_options = ['Unknown', 'A', 'B', 'C', 'D', 'E', 'F', 'T', 'G']
 title_options = ['Mrs', 'Mr', 'Master', 'Miss', 'Major', 'Rev',
                  'Dr', 'Ms', 'Mlle','Col', 'Capt', 'Mme', 'Countess',
                  'Don', 'Jonkheer']
@@ -25,6 +26,12 @@ def title_ind(name):
             return title_options.index(title)
     return 'nan'
 
+def deck_ind(cabin):
+    for deck in deck_options:
+        if cabin.find(deck) != -1:
+            return deck_options.index(deck)
+    return 0
+
 def get_batch(input_data, start, end):
     output = []
     batch_xs = []
@@ -34,11 +41,9 @@ def get_batch(input_data, start, end):
         # Create a list of outputs that contains the passenger's ID.
         output.append([data_point['passenger_id']])
         # Then create our batch outputs.
-        # batch_xs.append([data_point['age'], data_point['p_class'], data_point['sex'], 
-        #                  data_point['fare'], data_point['sibsp'], data_point['parch'], data_point['fare_per_person'], 
-        #                  data_point['embarked'], data_point['title']])
-        batch_xs.append([data_point['age'], data_point['p_class'], data_point['sex'],
-            data_point['title'], data_point['sibsp'], data_point['parch']])
+        batch_xs.append([data_point['age'], data_point['p_class'], data_point['sex'], 
+                         data_point['fare'], data_point['sibsp'], data_point['parch'], data_point['fare_per_person'], 
+                         data_point['embarked'], data_point['title'], data_point['deck'], data_point['family_size']])
         # Note that we have 2 outputs we expect: One for dead and one for alive.
         # This is done to make sure our activation function works as expected because
         # it ultimately needs to sum to one. See README for more details.
@@ -67,7 +72,8 @@ def get_cleaned(input_data, start, end):
         parch = float(data['Parch'])                    # Used
         ticket = data['Ticket']                         # Unused
         fare = float(data['Fare'] or 0)                 # Used                      * Could be missing in dataset
-        cabin = data['Cabin']                           # Unused
+        cabin = data['Cabin']                           # Used in deck
+        deck = deck_ind(cabin)                          # Used
         embarked = embarked_options[data['Embarked']]   # Used                      * Could be missing in dataset
         family_size = sibsp + parch + 1                 # Used
         age_class = age * p_class                       # Unused
@@ -78,5 +84,5 @@ def get_cleaned(input_data, start, end):
             'sibsp' : sibsp, 'parch' : parch, 'family_size' : family_size, 
             'fare_per_person' : fare_per_person, 'embarked' : embarked, 
             'survived' : survived, 'passenger_id' : passenger_id, 'name' : name,
-            'title' : title})
+            'title' : title, 'ticket': ticket, 'cabin': cabin, 'deck': deck})
     return output

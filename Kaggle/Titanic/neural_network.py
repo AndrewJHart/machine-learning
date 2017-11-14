@@ -4,7 +4,12 @@ from data import FEATURES
 from data import OUTPUTS
 import tensorflow as tf
 
+# Define how much of our training data we want to split.
+CV_PERCENT = 0.2
+TEST_PERCENT = 0.2
+
 class DataPoint:
+    length = 0
     indexes = []
     xs = []
     ys = []
@@ -22,56 +27,79 @@ class NNData:
         usage_data, usage_data_size = read_file(usage_file)
 
         if split_training:
-            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * 0.6))
-            self.cross_validation.indexes, self.cross_validation.xs, self.cross_validation.ys = get_batch(training_data, int(training_data_size * 0.6), int(training_data_size * 0.8))
-            self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * 0.8), training_data_size)
+            # Get our training data.
+            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)))
+            self.training.length = int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
+
+            # Get our cross validation data.
+            self.cross_validation.indexes, self.cross_validation.xs, self.cross_validation.ys = get_batch(training_data, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)), int(training_data_size * (1 - TEST_PERCENT)))
+            self.cross_validation.length = int(training_data_size * (1 - TEST_PERCENT)) - int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
+
+            # Get our testing data.
+            self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * (1 - TEST_PERCENT)), training_data_size)
+            self.testing.length = training_data_size - int(training_data_size * (1 - TEST_PERCENT))
+
+            # Get our output data.
             self.output.indexes, self.output.xs, self.output.ys = get_batch(usage_data, 0, usage_data_size)
+            self.output.length = usage_data_size
         else:
+            # Get our training data.
             self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, training_data_size)
+            self.training.length = training_data_size
+
+            # Get our output data.
             self.output.indexes, self.output.xs, self.output.ys = get_batch(usage_data, 0, usage_data_size)
+            self.output.length = usage_data_size
 
 
 # Setup some helper methods.
 def weight_variable(shape):
-    initial = tf.zeros(shape)
+    initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial, name="W")
 
 def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial, name="b")
 
-#############################################################
-#############################################################
-################## Setup TensorFlow #########################
-#############################################################
-#############################################################
-# Next lets go ahead and calculate what our results are.
+def create_layer(name, input, input_shape, output_shape, softmax=False):
+    # Create our weights and calculate our prediction.
+    W = weight_variable([input_shape, output_shape])
+    b = bias_variable([output_shape])
+    y = tf.matmul(input, W) + b
+    if softmax:
+        y = tf.nn.softmax(y)
+    # Give some summaries for the outputs.
+    tf.summary.histogram("weights_" + name, W)
+    tf.summary.histogram("biases_" + name, b)
+    tf.summary.histogram("y_" + name, y)
+    return y
+
 with tf.name_scope("prediction"):
     x = tf.placeholder(tf.float32, [None, FEATURES], name="inputs")
     y_ = tf.placeholder(tf.float32, [None, OUTPUTS], name="actuals")
-    W = weight_variable([FEATURES, OUTPUTS])
-    b = bias_variable([OUTPUTS])
-    y_mid = tf.matmul(x, W) + b
-    prediction = tf.nn.softmax(y_mid)
-    output = tf.argmax(prediction, 1)
-    # Give some summaries for the outputs.
-    tf.summary.histogram("weights", W)
-    tf.summary.histogram("biases", b)
-    tf.summary.histogram("prediction", prediction)
+
+    # 3 layers (1 input, 0 hidden, 1 output).
+    y_input = create_layer("input", x, FEATURES, 50, softmax=True)
+    y_activation = create_layer("activation", y_input, 50, OUTPUTS, softmax=True)
+
+    # Get our calculated input (1 if survived, 0 otherwise)
+    output = tf.argmax(y_activation, 1)
 
 # Now calculate the error and train it.
 with tf.name_scope("cost"):
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=prediction))
+    cost = -(tf.reduce_sum(y_ * tf.log(y_activation) + (1 - y_) * tf.log(1 - y_activation)))
     tf.summary.scalar("cost", cost)
 with tf.name_scope("train"):
     train_step = tf.train.GradientDescentOptimizer(1e-4).minimize(cost)
 # Calculate the accuracy finally.
-correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_, 1))
+correct_prediction = tf.equal(tf.argmax(y_activation, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.summary.scalar("accuracy", accuracy)
 
 #############################################################
 #############################################################
+#############################################################
+# Helper methods for utilizing the neural network.  #########
 #############################################################
 #############################################################
 #############################################################
@@ -79,24 +107,31 @@ tf.summary.scalar("accuracy", accuracy)
 def setup(log_dir):
     # Setup our session.
     sess = tf.InteractiveSession()
-    tf.global_variables_initializer().run()
     merged_summary = tf.summary.merge_all()
     writer = tf.summary.FileWriter(log_dir)
     writer.add_graph(sess.graph)
+    tf.global_variables_initializer().run()
     return sess, merged_summary, writer
 
+# Keep track of our training iterations.
 training_iteration = 0
 
-def train(sess, data):
+def train(sess, data, batch=1):
     global training_iteration
-    sess.run(train_step, feed_dict={x: data.training.xs, y_: data.training.ys})
-    training_iteration += 1
+    for i in range (1, batch + 1):
+        data_start = int(((i - 1) / batch) * data.training.length)
+        data_end = int((i / batch) * data.training.length)
+        sess.run(train_step, feed_dict={x: data.training.xs[data_start:data_end], y_: data.training.ys[data_start:data_end]})
+        training_iteration += 1
 
-def train_summary(sess, data, merged_summary, writer):
+def train_summary(sess, data, merged_summary, writer, batch=1):
     global training_iteration
-    s, t = sess.run([merged_summary, train_step], feed_dict={x: data.training.xs, y_: data.training.ys})
-    writer.add_summary(s, training_iteration)
-    training_iteration += 1
+    for i in range (1, batch + 1):
+        data_start = int(((i - 1) / batch) * data.training.length)
+        data_end = int((i / batch) * data.training.length)
+        s, t = sess.run([merged_summary, train_step], feed_dict={x: data.training.xs[data_start:data_end], y_: data.training.ys[data_start:data_end]})
+        writer.add_summary(s, training_iteration)
+        training_iteration += 1
 
 # Accuracy methods.
 def get_cv_accuracy(sess, data):
