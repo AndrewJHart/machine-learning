@@ -78,9 +78,10 @@ with tf.name_scope("prediction"):
     x = tf.placeholder(tf.float32, [None, FEATURES], name="inputs")
     y_ = tf.placeholder(tf.float32, [None, OUTPUTS], name="actuals")
 
-    # 3 layers (1 input, 0 hidden, 1 output).
-    y_input = create_layer("input", x, FEATURES, 50, softmax=True)
-    y_activation = create_layer("activation", y_input, 50, OUTPUTS, softmax=True)
+    # 3 layers (1 input, 1 hidden, 1 output).
+    y_input = create_layer("input", x, FEATURES, OUTPUTS, softmax=True)
+    y_hidden = create_layer("hidden", y_input, OUTPUTS, OUTPUTS, softmax=True)
+    y_activation = create_layer("activation", y_hidden, OUTPUTS, OUTPUTS, softmax=True)
 
     # Get our calculated input (1 if survived, 0 otherwise)
     output = tf.argmax(y_activation, 1)
@@ -134,6 +135,8 @@ def train_summary(sess, data, merged_summary, writer, batch=1):
         training_iteration += 1
 
 # Accuracy methods.
+def get_train_accuracy(sess, data):
+    return sess.run(accuracy, feed_dict={x: data.training.xs, y_: data.training.ys}) * 100
 def get_cv_accuracy(sess, data):
     return sess.run(accuracy, feed_dict={x: data.cross_validation.xs, y_: data.cross_validation.ys}) * 100
 def get_test_accuracy(sess, data):

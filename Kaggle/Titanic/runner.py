@@ -11,7 +11,7 @@ data = nn.NNData(TRAINING_FILE_NAME, TESTING_FILE_NAME, split_training=False)
 
 # Setup our neural network and train it.
 sess, merged_summary, writer = nn.setup(LOG_DIR)
-for i in range(1000):
+for i in range(10000):
     nn.train(sess, data, batch=10)
 
 # Finally, save the results of our actual use case.
@@ -22,6 +22,7 @@ print()
 print()
 print("======================")
 print("======================")
+print("Training Accuracy: {}".format(nn.get_train_accuracy(sess, data)))
 print("Output saved to: {}".format(OUTPUT_FILE_NAME))
 print("======================")
 print("======================")
