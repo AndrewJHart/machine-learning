@@ -1,8 +1,9 @@
 # We'll need to import csv to read our CSV files.
 import csv
+import math
 
 # Define some constants that we'll want to have for our project.
-FEATURES = 11
+FEATURES = 9
 OUTPUTS = 2
 
 def read_file(file_name):
@@ -37,13 +38,34 @@ def get_batch(input_data, start, end):
     batch_xs = []
     batch_ys = []
     cleaned_data = get_cleaned(input_data, start, end)
+
+    # We want to do mean normalization on some of our data, so start
+    # by calculating the average of our ages and fares.
+    avg_age = 0
+    avg_fare = 0
+    for data_point in cleaned_data:
+        avg_age += data_point['age']
+        avg_fare += data_point['fare']
+    avg_age /= end - start
+    avg_fare /= end - start
+
+    # Next calculate our standard deviations for our ages and fares.
+    # We'll actually store these when we do the final pass through the data.
+    std_age = 0
+    std_fare = 0
+    for data_point in cleaned_data:
+        std_age += (data_point['age'] - avg_age) * (data_point['age'] - avg_age)
+        std_fare += (data_point['fare'] - avg_fare) * (data_point['fare'] - avg_fare)
+    std_age = math.sqrt((1 / (end - start)) * std_age)
+    std_fare = math.sqrt((1 / (end - start)) * std_fare)
+
     for data_point in cleaned_data:
         # Create a list of outputs that contains the passenger's ID.
         output.append([data_point['passenger_id']])
         # Then create our batch outputs.
-        batch_xs.append([data_point['age'], data_point['p_class'], data_point['sex'], 
-                         data_point['fare'], data_point['sibsp'], data_point['parch'], data_point['fare_per_person'], 
-                         data_point['embarked'], data_point['title'], data_point['deck'], data_point['family_size']])
+        batch_xs.append([(data_point['age'] - avg_age) / std_age, data_point['p_class'], data_point['sex'], 
+                         (data_point['fare'] - avg_fare) / std_fare, data_point['sibsp'], data_point['parch'], 
+                         data_point['embarked'], data_point['title'], data_point['deck']])
         # Note that we have 2 outputs we expect: One for dead and one for alive.
         # This is done to make sure our activation function works as expected because
         # it ultimately needs to sum to one. See README for more details.
