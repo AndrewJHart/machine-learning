@@ -53,47 +53,48 @@ class NNData:
 
 
 # Setup some helper methods.
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial, name="W")
+def weight_variable(shape, name):
+    initial = tf.zeros(shape)
+    return tf.Variable(initial, name="W" + name)
 
-def bias_variable(shape):
+def bias_variable(shape, name):
     initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial, name="b")
+    return tf.Variable(initial, name="b" + name)
 
-def create_layer(name, input, input_shape, output_shape, softmax=False):
+def create_layer(name, input, input_shape, output_shape, activation_function=None):
     # Create our weights and calculate our prediction.
-    W = weight_variable([input_shape, output_shape])
-    b = bias_variable([output_shape])
+    W = weight_variable([input_shape, output_shape], name)
+    b = bias_variable([output_shape], name)
     y = tf.matmul(input, W) + b
-    if softmax:
+    if activation_function is "softmax":
         y = tf.nn.softmax(y)
+    if activation_function is "relu":
+        y = tf.nn.relu(y)
     # Give some summaries for the outputs.
     tf.summary.histogram("weights_" + name, W)
     tf.summary.histogram("biases_" + name, b)
     tf.summary.histogram("y_" + name, y)
-    return y
+    return W, y
 
 with tf.name_scope("prediction"):
     x = tf.placeholder(tf.float32, [None, FEATURES], name="inputs")
     y_ = tf.placeholder(tf.float32, [None, OUTPUTS], name="actuals")
 
-    # 3 layers (1 input, 1 hidden, 1 output).
-    y_input = create_layer("input", x, FEATURES, FEATURES, softmax=True)
-    y_hidden = create_layer("hidden", y_input, FEATURES, OUTPUTS, softmax=True)
-    y_activation = create_layer("activation", y_hidden, OUTPUTS, OUTPUTS, softmax=True)
+    # Just a straightforward in -> out.
+    W_activation, y_activation = create_layer("activation", x, FEATURES, OUTPUTS, activation_function=None)
+    prediction = tf.nn.softmax(y_activation)
 
     # Get our calculated input (1 if survived, 0 otherwise)
-    output = tf.argmax(y_activation, 1)
+    output = tf.argmax(prediction, 1)
 
 # Now calculate the error and train it.
 with tf.name_scope("cost"):
-    cost = -(tf.reduce_sum(y_ * tf.log(y_activation) + (1 - y_) * tf.log(1 - y_activation)))
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_activation))
     tf.summary.scalar("cost", cost)
 with tf.name_scope("train"):
-    train_step = tf.train.GradientDescentOptimizer(1e-4).minimize(cost)
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
 # Calculate the accuracy finally.
-correct_prediction = tf.equal(tf.argmax(y_activation, 1), tf.argmax(y_, 1))
+correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.summary.scalar("accuracy", accuracy)
 
