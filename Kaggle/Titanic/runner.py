@@ -11,7 +11,7 @@ data = nn.NNData(TRAINING_FILE_NAME, TESTING_FILE_NAME, split_training=False)
 
 # Setup our neural network and train it.
 sess, merged_summary, writer = nn.setup(LOG_DIR)
-for i in range(100000):
+for i in range(25000):
     nn.train(sess, data)
 
 # Finally, save the results of our actual use case.
