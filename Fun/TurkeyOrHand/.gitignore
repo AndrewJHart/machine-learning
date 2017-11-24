@@ -6,3 +6,7 @@ __pycache__
 training_data
 test_images
 model
+
+# Ignore some of the additional NodeJS stuf.
+package-lock.json
+node_modules/
