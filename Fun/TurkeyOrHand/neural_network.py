@@ -1,3 +1,4 @@
+import os
 import tensorflow as tf
 import file_reader as fr
 
@@ -5,10 +6,11 @@ CATEGORIES = ['live_turkey', 'cooked_turkey', 'hand_turkey', 'hand_palm']
 
 # Create our placeholders and load our data. keep_prob is the probability we
 # will keep a weight during training.
-data = fr.DataPoints(CATEGORIES)
-x_image = data.images
-y = data.labels
+x = tf.placeholder(tf.float32, shape=[None, 784 * 3], name="images")
+y = tf.placeholder(tf.float32, shape=[None, 4], name="y")
 keep_prob = tf.placeholder(tf.float32, name="kP")
+
+x_image = tf.reshape(x, [-1, 28, 28, 3])
 
 # Setup some helper methods.
 # Setup our weights and biases and try to prevent them from
@@ -58,10 +60,11 @@ def create_dropout_connected_readout(input, input_size, output_size, name="reado
         return tf.matmul(input, weight_dropout) + biases
 
 # We have 3 layers that we pass everything through before the readout.
-layer1 = create_conv_pool(x_image, 3, 32 * 3)
-layer2 = create_conv_pool(layer1, 32 * 3, 64 * 3)
-full_connected_layer = create_fc_layer(layer2, 7 * 7 * 64 * 3, 1024 * 3)
-prediction = create_dropout_connected_readout(full_connected_layer, 1024 * 3, 4)
+layer1 = create_conv_pool(x_image, 3, 32)
+layer2 = create_conv_pool(layer1, 32, 64)
+full_connected_layer = create_fc_layer(layer2, 7 * 7 * 64, 1024)
+prediction = create_dropout_connected_readout(full_connected_layer, 1024, 4)
+output = tf.argmax(prediction, 1)
 
 # Now we train the model and evaluate its accuracy.
 with tf.name_scope("cost_calc"):
@@ -99,17 +102,35 @@ def setup(log_dir):
 # Keep track of our training iterations.
 training_iteration = 0
 
-def train(sess, batch=1):
+def train(sess, data, batch=1):
     global training_iteration
-    sess.run(train_step, feed_dict={keep_prob: 0.5})
+    sess.run(train_step, feed_dict={x: data.images, y: data.labels, keep_prob: 0.5})
     training_iteration += 1
 
-def train_summary(sess, merged_summary, writer):
+def train_summary(sess, data, merged_summary, writer):
     global training_iteration
-    s, t = sess.run([merged_summary, train_step], feed_dict={keep_prob: 0.5})
+    s, t = sess.run([merged_summary, train_step], feed_dict={x: data.images, y: data.labels, keep_prob: 0.5})
     writer.add_summary(s, training_iteration)
     training_iteration += 1
 
 # Accuracy methods.
-def get_train_accuracy(sess):
-    return sess.run(accuracy, feed_dict={keep_prob: 0.5}) * 100
+def get_accuracy(sess, data):
+    return sess.run(accuracy, feed_dict={x: data.images, y: data.labels, keep_prob: 0.5}) * 100
+
+def get_prediction(sess, image):
+    image_data = fr.read_image(image)
+    out, pred = sess.run([output, prediction], feed_dict={x: [image_data], y: [[0, 0, 0, 0]], keep_prob: 0.5})
+    name = CATEGORIES[out[0]]
+    return name, pred
+
+def load_model(sess, model_name, directory="model"):
+    if os.path.exists(directory):
+        saver.restore(sess, directory + "/" + model_name);
+    else:
+        print("Error loading model!")
+        exit(-1)
+
+def save_model(sess, model_name, directory="model"):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    saver.save(sess, directory + "/" + model_name);

@@ -2,5 +2,7 @@
 logs_dir
 __pycache__
 
-# Ignore our training images. Sorry folks!
+# Ignore our training images and saved model. Sorry folks!
 training_data
+test_images
+model
