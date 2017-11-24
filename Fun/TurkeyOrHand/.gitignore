@@ -1,0 +1,6 @@
+# Ignore directories created at run time.
+logs_dir
+__pycache__
+
+# Ignore our training images. Sorry folks!
+training_data
