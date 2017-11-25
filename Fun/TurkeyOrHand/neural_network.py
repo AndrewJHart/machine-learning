@@ -6,7 +6,7 @@ CATEGORIES = ['live_turkey', 'cooked_turkey', 'hand_turkey', 'hand_palm']
 
 # Create our placeholders and load our data. keep_prob is the probability we
 # will keep a weight during training.
-x = tf.placeholder(tf.float32, shape=[None, 784 * 3], name="images")
+x = tf.placeholder(tf.float32, shape=[None, 784 * 3], name="x")
 y = tf.placeholder(tf.float32, shape=[None, 4], name="y")
 keep_prob = tf.placeholder(tf.float32, name="kP")
 
@@ -64,7 +64,7 @@ layer1 = create_conv_pool(x_image, 3, 32)
 layer2 = create_conv_pool(layer1, 32, 64)
 full_connected_layer = create_fc_layer(layer2, 7 * 7 * 64, 1024)
 prediction = create_dropout_connected_readout(full_connected_layer, 1024, 4)
-output = tf.argmax(prediction, 1)
+predicted_category = tf.argmax(prediction, 1, name="predicted_category")
 
 # Now we train the model and evaluate its accuracy.
 with tf.name_scope("cost_calc"):
@@ -74,7 +74,7 @@ with tf.name_scope("train"):
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
 
 correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
 tf.summary.scalar('accuracy', accuracy)
 
 # Create an embedding to display our fully connected layer visually.
@@ -115,22 +115,27 @@ def train_summary(sess, data, merged_summary, writer):
 
 # Accuracy methods.
 def get_accuracy(sess, data):
-    return sess.run(accuracy, feed_dict={x: data.images, y: data.labels, keep_prob: 0.5}) * 100
+    return sess.run(accuracy, feed_dict={x: data.images, y: data.labels, keep_prob: 1.0}) * 100
 
 def get_prediction(sess, image):
     image_data = fr.read_image(image)
-    out, pred = sess.run([output, prediction], feed_dict={x: [image_data], y: [[0, 0, 0, 0]], keep_prob: 0.5})
+    out = sess.run(output, feed_dict={x: [image_data], y: [[0, 0, 0, 0]], keep_prob: 1.0})
     name = CATEGORIES[out[0]]
-    return name, pred
+    return name
 
-def load_model(sess, model_name, directory="model"):
+def load_model(sess, directory="model"):
     if os.path.exists(directory):
-        saver.restore(sess, directory + "/" + model_name);
+        tf.saved_model.loader.load(sess, ["tag"], directory)
+        return tf.get_default_graph()
     else:
         print("Error loading model!")
         exit(-1)
 
-def save_model(sess, model_name, directory="model"):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    saver.save(sess, directory + "/" + model_name);
+def save_model(sess, directory="model"):
+    builder = tf.saved_model.builder.SavedModelBuilder(directory)
+    builder.add_meta_graph_and_variables(sess, ["tag"], signature_def_map = {
+        "model": tf.saved_model.signature_def_utils.predict_signature_def(
+            inputs={"x": x, "y": y, "keep_prob": keep_prob},
+            outputs={"predicted_category": predicted_category, "accuracy": accuracy})
+        })
+    builder.save()

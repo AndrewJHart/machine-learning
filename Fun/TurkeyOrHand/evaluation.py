@@ -20,7 +20,7 @@ print("Training Accuracy: {}".format(nn.get_accuracy(sess, data)))
 save_request = input("Save this model? ")
 if save_request.lower() == "yes" or save_request.lower() == "y":
     print("saving...")
-    nn.save_model(sess, 'turkey_day')
+    nn.save_model(sess)
     print("successfully saved!")
 # print("Images count: {}".format(len(data.images))
 # print("Labels count: {}".format(len(data.labels))
