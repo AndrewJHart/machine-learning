@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+
+  form(method='POST' action='/predict', encType='multipart/form-data')
+    input#name.form-control(type='file', name='image_upload')
+    br
+    button.btn.btn-primary(type='submit') Submit

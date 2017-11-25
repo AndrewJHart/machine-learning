@@ -8,7 +8,7 @@ import os
 CATEGORIES = ['live_turkey', 'cooked_turkey', 'hand_turkey', 'hand_palm']
 
 # Helper method for reloading the model.
-def load_model(sess, directory="model"):
+def load_model(sess, directory="../model"):
     if os.path.exists(directory):
         tf.saved_model.loader.load(sess, ["tag"], directory)
         return tf.get_default_graph()
@@ -23,8 +23,8 @@ def get_prediction(sess, image, graph):
     y = graph.get_tensor_by_name("y:0")
     keep_prob = graph.get_tensor_by_name("kP:0")
     out = sess.run(model, feed_dict={x: [image_data], y: [[0, 0, 0, 0]], keep_prob: 1.0})
-    name = CATEGORIES[out[0]]
-    return name
+    # name = CATEGORIES[out[0]]
+    return out[0]
 
 # Setup our session and load in our model.
 sess = tf.InteractiveSession()
