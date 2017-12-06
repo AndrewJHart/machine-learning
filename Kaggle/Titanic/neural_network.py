@@ -5,10 +5,6 @@ from data import get_batch
 from data import FEATURES
 from data import OUTPUTS
 
-# Define how much of our training data we want to split.
-CV_PERCENT = 0.2
-TEST_PERCENT = 0.2
-
 class DataPoint:
     length = 0
     indexes = []
@@ -22,35 +18,35 @@ class NNData:
     testing = DataPoint()
     output = DataPoint()
 
-    def __init__(self, training_file, usage_file, split_type="test"):
+    def __init__(self, training_file, usage_file, split_type="test", cv_percent=0.2, test_percent=0.2):
         # Start by reading in our CSV files.
         training_data, training_data_size = read_file(training_file)
         usage_data, usage_data_size = read_file(usage_file)
 
         if split_type == "cv-test":
             # Get our training data.
-            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)))
-            self.training.length = int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
+            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * (1 - cv_percent - test_percent)))
+            self.training.length = int(training_data_size * (1 - cv_percent - test_percent))
 
             # Get our cross validation data.
-            self.cross_validation.indexes, self.cross_validation.xs, self.cross_validation.ys = get_batch(training_data, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)), int(training_data_size * (1 - TEST_PERCENT)))
-            self.cross_validation.length = int(training_data_size * (1 - TEST_PERCENT)) - int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
+            self.cross_validation.indexes, self.cross_validation.xs, self.cross_validation.ys = get_batch(training_data, int(training_data_size * (1 - cv_percent - test_percent)), int(training_data_size * (1 - test_percent)))
+            self.cross_validation.length = int(training_data_size * (1 - test_percent)) - int(training_data_size * (1 - cv_percent - test_percent))
 
             # Get our testing data.
-            self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * (1 - TEST_PERCENT)), training_data_size)
-            self.testing.length = training_data_size - int(training_data_size * (1 - TEST_PERCENT))
+            self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * (1 - test_percent)), training_data_size)
+            self.testing.length = training_data_size - int(training_data_size * (1 - test_percent))
 
             # Get our output data.
             self.output.indexes, self.output.xs, self.output.ys = get_batch(usage_data, 0, usage_data_size)
             self.output.length = usage_data_size
         elif split_type == "test":
             # Get our training data.
-            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)))
-            self.training.length = int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
+            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * (1 - test_percent)))
+            self.training.length = int(training_data_size * (1 - test_percent))
 
             # Get our testing data.
-            self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)), training_data_size)
-            self.testing.length = training_data_size - int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
+            self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * (1 - test_percent)), training_data_size)
+            self.testing.length = training_data_size - int(training_data_size * (1 - test_percent))
 
             # Get our output data.
             self.output.indexes, self.output.xs, self.output.ys = get_batch(usage_data, 0, usage_data_size)
@@ -159,6 +155,9 @@ def get_cv_accuracy(sess, data):
     return sess.run(accuracy, feed_dict={x: data.cross_validation.xs, y_: data.cross_validation.ys}) * 100
 def get_test_accuracy(sess, data):
     return sess.run(accuracy, feed_dict={x: data.testing.xs, y_: data.testing.ys}) * 100
+
+def reset():
+    tf.global_variables_initializer().run()
 
 def load_model(sess, model_name, directory="model"):
     if os.path.exists(directory):
