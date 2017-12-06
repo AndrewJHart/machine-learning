@@ -13,8 +13,12 @@ data = nn.NNData(TRAINING_FILE_NAME, TESTING_FILE_NAME, split_training=True)
 
 # Setup our neural network and train it.
 sess, merged_summary, writer = nn.setup(LOG_DIR)
-for i in range(25000):
-    nn.train_summary(sess, data, merged_summary, writer)
+load_request = input("Load previous model? ").lower()
+if load_request == "yes" or load_request == "y":
+    nn.load_model(sess, 'titanic')
+else:
+    for i in range(25000):
+        nn.train_summary(sess, data, merged_summary, writer)
 
 # Finally, save the results of our actual use case.
 nn.save_outputs(sess, data, OUTPUT_FILE_NAME)
@@ -27,5 +31,11 @@ print("======================")
 print("Training Accuracy: {}".format(nn.get_train_accuracy(sess, data)))
 print("Cross-validation Accuracy: {}".format(nn.get_cv_accuracy(sess, data)))
 print("Testing Accuracy: {}".format(nn.get_test_accuracy(sess, data)))
+if load_request != "yes" and load_request != "y":
+    save_request = input("Save this model? ")
+    if save_request.lower() == "yes" or save_request.lower() == "y":
+        print("saving...")
+        nn.save_model(sess, 'titanic')
+        print("successfully saved!")
 print("======================")
 print("======================")

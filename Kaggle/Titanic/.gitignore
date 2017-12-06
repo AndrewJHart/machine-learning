@@ -7,3 +7,6 @@ train.csv
 test.csv
 training_predictions.csv
 results.csv
+
+# Ignore our saved models.
+model
