@@ -17,7 +17,7 @@ load_request = input("Load previous model? ").lower()
 if load_request == "yes" or load_request == "y":
     nn.load_model(sess, 'titanic')
 else:
-    for i in range(25000):
+    for i in range(10000):
         nn.train_summary(sess, data, merged_summary, writer)
 
 # Finally, save the results of our actual use case.

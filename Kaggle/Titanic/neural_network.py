@@ -67,7 +67,7 @@ class NNData:
 
 # Setup some helper methods.
 def weight_variable(shape, name):
-    initial = tf.zeros(shape)
+    initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial, name="W" + name)
 
 def bias_variable(shape, name):
@@ -93,8 +93,10 @@ with tf.name_scope("prediction"):
     x = tf.placeholder(tf.float32, [None, FEATURES], name="inputs")
     y_ = tf.placeholder(tf.float32, [None, OUTPUTS], name="actuals")
 
-    # Just a straightforward in -> out.
-    W_activation, y_activation = create_layer("activation", x, FEATURES, OUTPUTS, activation_function=None)
+    #  3 layers (1 input, 1 hidden, 1 output).
+    W_input, y_input = create_layer("input", x, FEATURES, OUTPUTS, activation_function="softmax")
+    W_hidden, y_hidden = create_layer("hidden", y_input, OUTPUTS, OUTPUTS, activation_function="softmax")
+    W_activation, y_activation = create_layer("activation", y_hidden, OUTPUTS, OUTPUTS, activation_function=None)
     prediction = tf.nn.softmax(y_activation)
 
     # Get our calculated input (1 if survived, 0 otherwise)
