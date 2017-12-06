@@ -22,12 +22,12 @@ class NNData:
     testing = DataPoint()
     output = DataPoint()
 
-    def __init__(self, training_file, usage_file, split_training=True):
+    def __init__(self, training_file, usage_file, split_type="test"):
         # Start by reading in our CSV files.
         training_data, training_data_size = read_file(training_file)
         usage_data, usage_data_size = read_file(usage_file)
 
-        if split_training:
+        if split_type == "cv-test":
             # Get our training data.
             self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)))
             self.training.length = int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
@@ -39,6 +39,18 @@ class NNData:
             # Get our testing data.
             self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * (1 - TEST_PERCENT)), training_data_size)
             self.testing.length = training_data_size - int(training_data_size * (1 - TEST_PERCENT))
+
+            # Get our output data.
+            self.output.indexes, self.output.xs, self.output.ys = get_batch(usage_data, 0, usage_data_size)
+            self.output.length = usage_data_size
+        elif split_type == "test":
+            # Get our training data.
+            self.training.indexes, self.training.xs, self.training.ys = get_batch(training_data, 0, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)))
+            self.training.length = int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
+
+            # Get our testing data.
+            self.testing.indexes, self.testing.xs, self.testing.ys = get_batch(training_data, int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT)), training_data_size)
+            self.testing.length = training_data_size - int(training_data_size * (1 - CV_PERCENT - TEST_PERCENT))
 
             # Get our output data.
             self.output.indexes, self.output.xs, self.output.ys = get_batch(usage_data, 0, usage_data_size)
