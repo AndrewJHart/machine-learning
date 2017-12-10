@@ -90,9 +90,9 @@ with tf.name_scope("prediction"):
     y_ = tf.placeholder(tf.float32, [None, OUTPUTS], name="actuals")
 
     #  3 layers (1 input, 1 hidden, 1 output).
-    W_input, y_input = create_layer("input", x, FEATURES, OUTPUTS, activation_function="softmax")
-    W_hidden, y_hidden = create_layer("hidden", y_input, OUTPUTS, OUTPUTS, activation_function="softmax")
-    W_activation, y_activation = create_layer("activation", y_hidden, OUTPUTS, OUTPUTS, activation_function=None)
+    W_input, y_input = create_layer("input", x, FEATURES, 10, activation_function="softmax")
+    W_hidden, y_hidden = create_layer("hidden", y_input, 10, 10, activation_function=None)
+    W_activation, y_activation = create_layer("activation", y_hidden, 10, OUTPUTS, activation_function=None)
     prediction = tf.nn.softmax(y_activation)
 
     # Get our calculated input (1 if survived, 0 otherwise)

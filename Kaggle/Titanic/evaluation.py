@@ -30,12 +30,14 @@ else:
     cycle_count = input("How many times should this model be tested? ")
     best_accuracy = 0
     for j in range(int(cycle_count)):
-        print("Training cycle {}...".format(j + 1), end="")
         nn.reset()
-        for i in range(10000):
+        count = 10000
+        for i in range(count):
             nn.train_summary(sess, data, merged_summary, writer)
+            progress = int((i / count) * 10)
+            print('\rTraining cycle {0}: [{1}{2}] {3}%'.format(j + 1, '#' * progress, ' ' * (10 - progress), round(100 * (i / count)), 2), end=" ")
         accuracy = nn.get_test_accuracy(sess, data)
-        print("done.")
+        print("\nAccuracy: {}".format(accuracy))
         if accuracy > best_accuracy:
             nn.save_model(sess, 'titanic')
             best_accuracy = accuracy
