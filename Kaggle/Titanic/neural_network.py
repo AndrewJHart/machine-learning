@@ -16,12 +16,16 @@ class NNData:
     training = DataPoint()
     cross_validation = DataPoint()
     testing = DataPoint()
+    everything = DataPoint()
     output = DataPoint()
 
     def __init__(self, training_file, usage_file, split_type="test", cv_percent=0.2, test_percent=0.2):
         # Start by reading in our CSV files.
         training_data, training_data_size = read_file(training_file)
         usage_data, usage_data_size = read_file(usage_file)
+
+        self.everything.indexes, self.everything.xs, self.everything.ys = get_batch(training_data, 0, training_data_size)
+        self.everything.length = training_data_size
 
         if split_type == "cv-test":
             # Get our training data.
@@ -104,10 +108,20 @@ with tf.name_scope("cost"):
     tf.summary.scalar("cost", cost)
 with tf.name_scope("train"):
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cost)
-# Calculate the accuracy finally.
+# Calculate the accuracy.
 correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.summary.scalar("accuracy", accuracy)
+
+# Calculate our F1 score.
+tp = tf.count_nonzero(tf.argmax(prediction, 1) * tf.argmax(y_, 1))
+tn = tf.count_nonzero((tf.argmax(prediction, 1) - 1) * (tf.argmax(y_, 1) - 1))
+fp = tf.count_nonzero(tf.argmax(prediction, 1) * (tf.argmax(y_, 1) - 1))
+fn = tf.count_nonzero((tf.argmax(prediction, 1) - 1) * tf.argmax(y_, 1))
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+f1 = 2 * precision * recall / (precision + recall)
+tf.summary.scalar("f1", f1)
 
 saver = tf.train.Saver(tf.global_variables())
 
@@ -155,6 +169,28 @@ def get_cv_accuracy(sess, data):
     return sess.run(accuracy, feed_dict={x: data.cross_validation.xs, y_: data.cross_validation.ys}) * 100
 def get_test_accuracy(sess, data):
     return sess.run(accuracy, feed_dict={x: data.testing.xs, y_: data.testing.ys}) * 100
+def get_total_accuracy(sess, data):
+    return sess.run(accuracy, feed_dict={x: data.everything.xs, y_: data.everything.ys}) * 100
+
+# Cost methods.
+def get_train_cost(sess, data):
+    return sess.run(cost, feed_dict={x: data.training.xs, y_: data.training.ys})
+def get_cv_cost(sess, data):
+    return sess.run(cost, feed_dict={x: data.cross_validation.xs, y_: data.cross_validation.ys})
+def get_test_cost(sess, data):
+    return sess.run(cost, feed_dict={x: data.testing.xs, y_: data.testing.ys})
+def get_total_cost(sess, data):
+    return sess.run(cost, feed_dict={x: data.everything.xs, y_: data.everything.ys})
+
+# F1 Score methods.
+def get_train_f1_score(sess, data):
+    return sess.run(f1, feed_dict={x: data.training.xs, y_: data.training.ys})
+def get_cv_f1_score(sess, data):
+    return sess.run(f1, feed_dict={x: data.cross_validation.xs, y_: data.cross_validation.ys})
+def get_test_f1_score(sess, data):
+    return sess.run(f1, feed_dict={x: data.testing.xs, y_: data.testing.ys})
+def get_total_f1_score(sess, data):
+    return sess.run(f1, feed_dict={x: data.everything.xs, y_: data.everything.ys})
 
 def reset():
     tf.global_variables_initializer().run()

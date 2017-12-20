@@ -28,7 +28,7 @@ if load_request == "yes" or load_request == "y":
     print("======================")
 else:
     cycle_count = input("How many times should this model be tested? ")
-    best_accuracy = 0
+    best_f1_score = 0
     for j in range(int(cycle_count)):
         nn.reset()
         count = 10000
@@ -36,13 +36,13 @@ else:
             nn.train_summary(sess, data, merged_summary, writer)
             progress = int((i / count) * 10)
             print('\rTraining cycle {0}: [{1}{2}] {3}%'.format(j + 1, '#' * progress, ' ' * (10 - progress), round(100 * (i / count)), 2), end=" ")
-        accuracy = nn.get_test_accuracy(sess, data)
-        print("\nAccuracy: {}".format(accuracy))
-        if accuracy > best_accuracy:
+        f1_score = nn.get_total_f1_score(sess, data)
+        print("\nF1 Score: {}".format(f1_score))
+        if f1_score > best_f1_score:
             nn.save_model(sess, 'titanic')
-            best_accuracy = accuracy
-    # Print out our best accuracy.
-    print("Best Accuracy: {}".format(best_accuracy))
+            best_f1_score = f1_score
+    # Print out our best f1_score.
+    print("Best F1 Score: {}".format(best_f1_score))
     print("======================")
     print("======================")
 

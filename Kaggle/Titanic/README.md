@@ -1,10 +1,10 @@
 # Titanic
 This project is for www.kaggle.com 's Titanic: Machine Learning from Disaster starting competition. It's a pretty straightforward example that focuses on binary classification of who survived on the Titanic based on given data. Training data and testing data are not provided, as they should be downloaded from the competitions site (note that this competition is always active for beginners). More information about this can be found at https://www.kaggle.com/c/titanic/
 
-##### Accuracy: 77.511%
+##### Accuracy: 76.555%
 
 ## Usage
-The project is pretty straightforward to use. After saving your training data as train.csv and test data as test.csv, you can create and save a model by running the evaluation.py script. This will run the training simulation for however many times you want, saving the model that achieves the best accuracy on the test data split. You can then run runner.py to run the model that was previously saved against your test.csv data.
+The project is pretty straightforward to use. After saving your training data as train.csv and test data as test.csv, you can create and save a model by running the evaluation.py script. This will run the training simulation for however many times you want, saving the model that achieves the highest F1 score on the test data split. You can then run runner.py to run the model that was previously saved against your test.csv data.
 
 ## About
 This project is broken up into 3 parts: The data importation, the neural network, and the runners. The data importation imports all of our data and formats it into a way we can more easily read it, the neural network takes in that data, splits it into a training set, cross-validation set, and training set, and then trains it on a neural network. The runners either run the training, saving the best model (or evaluate a previously saved model) or run the model on actual data. Each of these parts is explained below.
@@ -44,13 +44,15 @@ There are several other outputs included in this as well, such as histograms of 
 #### Helper Methods
 Several helper methods are included as well. The first is a setup method which decides what directory our TensorBoard logs should be outputted to. Next there are two training methods: One that just trains on the given data, and the other that trains and outputs a summary for each iteration. Note that both of these allow for batching of the data as it is submitted as well.
 
-We then have several methods for calculating the accuracy on our training data, cross-validation data, and test data. We also have a reset method that will undo all previous training. This is heavily utilized in our evaluation.py script in order to train multiple times (more on this later). Next we have a load_model and save_model method, which are used to load and save the current model/previous models. Finally, we have a method for saving our results on the output data set into a CSV file for submission to Kaggle.
+We then have several methods for calculating the accuracy, cost, and F1 score on our training data, cross-validation data, and test data. We also have a reset method that will undo all previous training. This is heavily utilized in our evaluation.py script in order to train multiple times (more on this later). Next we have a load_model and save_model method, which are used to load and save the current model/previous models. Finally, we have a method for saving our results on the output data set into a CSV file for submission to Kaggle.
 
 ### Runner Scripts
 The runner scripts are split into two parts: evaluation.py and runner.py.
 
 #### evalution.py
 This script takes in our train.csv file, and splits our data (60/40 split) into a training set and a test set. It can then either load a previous model and tell you the accuracy of it, or create a new model and save it. When it creates the new model, it will run several times (as chosen at runtime), in order to get the best results. This is because our weights have a random intialization in order to improve our accuracy. The model that has the best results on the training set is then saved at the end.
+
+Note that we choose the best model based on the best F1 score, NOT the highest accuracy. This is because the F1 score takes into account both precision and recall, providing a much better measurement of our model. Thus we train multiple models and take the model with the highest F1 score as our best model.
 
 #### runner.py
 This script loaders our previously created model and runs it on our train.csv file. It then saves the results of what it calculates into results.csv, which can then be submitted to Kaggle for a score.
