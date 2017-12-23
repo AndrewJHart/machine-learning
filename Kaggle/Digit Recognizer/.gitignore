@@ -1,0 +1,12 @@
+# Ignore directories created at run time.
+logs_dir
+__pycache__
+
+# Ignore our training and results files. These should be gotten from Kaggle's site and generated.
+train.csv
+test.csv
+training_predictions.csv
+results.csv
+
+# Ignore our saved models.
+model
