@@ -1,7 +1,7 @@
 # Titanic
 This project is for www.kaggle.com 's Titanic: Machine Learning from Disaster starting competition. It's a pretty straightforward example that focuses on binary classification of who survived on the Titanic based on given data. Training data and testing data are not provided, as they should be downloaded from the competitions site (note that this competition is always active for beginners). More information about this can be found at https://www.kaggle.com/c/titanic/
 
-##### Accuracy: 76.555%
+##### Accuracy: 77.990%
 
 ## Usage
 The project is pretty straightforward to use. After saving your training data as train.csv and test data as test.csv, you can create and save a model by running the evaluation.py script. This will run the training simulation for however many times you want, saving the model that achieves the highest F1 score on the test data split. You can then run runner.py to run the model that was previously saved against your test.csv data.
