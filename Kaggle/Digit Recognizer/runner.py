@@ -11,18 +11,16 @@ data = nn.NNData(TRAINING_FILE_NAME, TESTING_FILE_NAME, split_type=None)
 
 # Setup our neural network and train it.
 sess, merged_summary, writer = nn.setup(LOG_DIR)
-nn.load_model(sess, 'titanic')
+nn.load_model(sess, 'dr')
 
 # Finally, save the results of our actual use case.
-nn.save_outputs(sess, data, OUTPUT_FILE_NAME)
+nn.save_outputs(sess, data, OUTPUT_FILE_NAME, batch=int(data.output.length / 10))
 
 # Acknowledge that we've saved our results.
 print()
 print()
 print("======================")
 print("======================")
-print("Training Accuracy: {}".format(nn.get_train_accuracy(sess, data)))
-print("F1 Score: {}".format(nn.get_total_f1_score(sess, data)))
 print("Output saved to: {}".format(OUTPUT_FILE_NAME))
 print("======================")
 print("======================")
