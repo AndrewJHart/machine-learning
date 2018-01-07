@@ -36,6 +36,10 @@ else:
     print("Finished training!")
     print("======================")
     print("======================")
+    # Save our model to be used for later.
+    print('\rSaving model...', end=" ")
+    nn.save_model(sess, 'dr')
+    print('\rSaving model...Done')
 
 # Finally, save the results of our actual use case.
 nn.save_outputs(sess, data, OUTPUT_FILE_NAME, batch_count)

@@ -121,9 +121,7 @@ with tf.name_scope("prediction"):
     # We have 3 layers that we pass everything through before the readout.
     layer1 = create_conv_pool(x_image, 1, 32)
     layer2 = create_conv_pool(layer1, 32, 64)
-    layer3 = create_conv_pool(layer2, 64, 128)
-    layer4 = create_conv_pool(layer3, 128, 256)
-    full_connected_layer = create_fc_layer(layer4, 7 * 7 * 256, 1024)
+    full_connected_layer = create_fc_layer(layer2, 7 * 7 * 64, 1024)
     y_activation = create_dropout_connected_readout(full_connected_layer, 1024, 10)
     prediction = tf.nn.softmax(y_activation)
 
