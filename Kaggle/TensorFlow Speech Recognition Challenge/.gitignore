@@ -5,6 +5,8 @@ __pycache__
 # Ignore our training and results files. These should be gotten from Kaggle's site and generated.
 data
 results.csv
+training_predictions.csv
 
 # Ignore our saved models.
 model
+model_sub_1
